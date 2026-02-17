@@ -33,9 +33,19 @@ export default function ProgressRing({
   });
 
   return (
-    <View style={{ width: size, height: size, alignItems: 'center', justifyContent: 'center' }}>
+    <View style={{ 
+      width: size, 
+      height: size, 
+      alignItems: 'center', 
+      justifyContent: 'center',
+      shadowColor: color,
+      shadowOffset: { width: 0, height: 0 },
+      shadowOpacity: 0.8,
+      shadowRadius: 10,
+      elevation: 10,
+    }}>
       <Svg width={size} height={size}>
-        <G rotation="-90" origin={`${size / 2}, ${size / 2}`}>
+        <G transform={`rotate(-90 ${size / 2} ${size / 2})`}>
           {/* Background Circle */}
           <Circle
             stroke="#2a2a35"
@@ -61,7 +71,13 @@ export default function ProgressRing({
       </Svg>
       <View style={StyleSheet.absoluteFillObject}>
         <View style={styles.centerContainer}>
-          <Text style={styles.progressText}>{Math.round(progress * 100)}%</Text>
+          <Text style={[styles.progressText, { 
+            textShadowColor: color,
+            textShadowOffset: { width: 0, height: 0 },
+            textShadowRadius: 10,
+          }]}>
+            {Math.round(progress * 100)}%
+          </Text>
         </View>
       </View>
     </View>

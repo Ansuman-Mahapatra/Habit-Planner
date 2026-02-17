@@ -1,7 +1,9 @@
 import { View, Text, TouchableOpacity, StyleSheet, Animated } from 'react-native';
-import { useRef, useEffect } from 'react';
+import { useRef, useEffect, useState } from 'react';
 import FontAwesome from '@expo/vector-icons/FontAwesome';
 import { format } from 'date-fns';
+import { LinearGradient } from 'expo-linear-gradient';
+import Confetti from './Confetti';
 
 interface Habit {
   _id: string;
@@ -27,9 +29,13 @@ export default function HabitCard({ habit, onToggle, onPress }: HabitCardProps) 
   // Determine if completed today
   const today = format(new Date(), 'yyyy-MM-dd');
   const isCompleted = habit.completions.some(c => c.date === today && c.completed);
+  const [showConfetti, setShowConfetti] = useState(false);
+  const [wasCompleted, setWasCompleted] = useState(isCompleted);
   
   // Animation for completion check
   const scaleAnim = useRef(new Animated.Value(isCompleted ? 1 : 0)).current;
+  const cardScale = useRef(new Animated.Value(1)).current;
+  const streakScale = useRef(new Animated.Value(1)).current;
 
   useEffect(() => {
     Animated.spring(scaleAnim, {
@@ -37,7 +43,48 @@ export default function HabitCard({ habit, onToggle, onPress }: HabitCardProps) 
       useNativeDriver: true,
       friction: 5,
     }).start();
+
+    // Show confetti when completing (not uncompleting)
+    if (isCompleted && !wasCompleted) {
+      setShowConfetti(true);
+      setTimeout(() => setShowConfetti(false), 3000);
+      
+      // Card celebration animation
+      Animated.sequence([
+        Animated.spring(cardScale, {
+          toValue: 1.05,
+          useNativeDriver: true,
+          friction: 3,
+        }),
+        Animated.spring(cardScale, {
+          toValue: 1,
+          useNativeDriver: true,
+          friction: 3,
+        }),
+      ]).start();
+    }
+    setWasCompleted(isCompleted);
   }, [isCompleted]);
+
+  // Animated streak fire
+  useEffect(() => {
+    if (habit.streak > 0) {
+      Animated.loop(
+        Animated.sequence([
+          Animated.timing(streakScale, {
+            toValue: 1.2,
+            duration: 500,
+            useNativeDriver: true,
+          }),
+          Animated.timing(streakScale, {
+            toValue: 1,
+            duration: 500,
+            useNativeDriver: true,
+          }),
+        ])
+      ).start();
+    }
+  }, [habit.streak]);
 
   // Frequency Badge Color
   const getFrequencyColor = (freq: string) => {
@@ -50,37 +97,56 @@ export default function HabitCard({ habit, onToggle, onPress }: HabitCardProps) 
   };
 
   return (
-    <TouchableOpacity activeOpacity={0.8} onPress={onPress} style={styles.cardContainer}>
-      <View style={[styles.card, { borderLeftColor: habit.color, borderLeftWidth: 4 }]}>
-        <View style={styles.content}>
-          <View style={styles.header}>
-            <Text style={styles.icon}>{habit.icon}</Text>
-            <View style={styles.textContainer}>
-              <Text style={styles.title}>{habit.title}</Text>
-              <View style={styles.badges}>
-                <View style={[styles.badge, { backgroundColor: getFrequencyColor(habit.frequency) + '20' }]}>
-                  <Text style={[styles.badgeText, { color: getFrequencyColor(habit.frequency) }]}>
-                    {habit.frequency.charAt(0).toUpperCase() + habit.frequency.slice(1)}
-                  </Text>
-                </View>
-                <View style={styles.streakBadge}>
-                  <Text style={styles.streakText}>🔥 {habit.streak}</Text>
+    <>
+      {showConfetti && <Confetti count={30} duration={2500} />}
+      <Animated.View style={{ transform: [{ scale: cardScale }] }}>
+        <TouchableOpacity activeOpacity={0.8} onPress={onPress} style={styles.cardContainer}>
+          <LinearGradient
+            colors={isCompleted ? [habit.color + '30', '#16161F'] : ['#16161F', '#16161F']}
+            start={{ x: 0, y: 0 }}
+            end={{ x: 1, y: 0 }}
+            style={[styles.card, { borderLeftColor: habit.color, borderLeftWidth: 4 }]}
+          >
+            <View style={styles.content}>
+              <View style={styles.header}>
+                <Text style={styles.icon}>{habit.icon}</Text>
+                <View style={styles.textContainer}>
+                  <Text style={styles.title}>{habit.title}</Text>
+                  <View style={styles.badges}>
+                    <View style={[styles.badge, { backgroundColor: getFrequencyColor(habit.frequency) + '20' }]}>
+                      <Text style={[styles.badgeText, { color: getFrequencyColor(habit.frequency) }]}>
+                        {habit.frequency.charAt(0).toUpperCase() + habit.frequency.slice(1)}
+                      </Text>
+                    </View>
+                    {habit.streak > 0 && (
+                      <Animated.View 
+                        style={[
+                          styles.streakBadge,
+                          { transform: [{ scale: streakScale }] }
+                        ]}
+                      >
+                        <Text style={styles.streakText}>🔥 {habit.streak}</Text>
+                      </Animated.View>
+                    )}
+                  </View>
                 </View>
               </View>
             </View>
-          </View>
-        </View>
 
-        <TouchableOpacity 
-          style={[styles.checkbox, isCompleted && styles.checkboxCompleted]} 
-          onPress={() => onToggle(habit._id)}
-        >
-          {isCompleted && (
-            <FontAwesome name="check" size={14} color="#fff" />
-          )}
+            <TouchableOpacity 
+              style={[styles.checkbox, isCompleted && styles.checkboxCompleted]} 
+              onPress={() => onToggle(habit._id)}
+            >
+              <Animated.View style={{ transform: [{ scale: scaleAnim }] }}>
+                {isCompleted && (
+                  <FontAwesome name="check" size={14} color="#fff" />
+                )}
+              </Animated.View>
+            </TouchableOpacity>
+          </LinearGradient>
         </TouchableOpacity>
-      </View>
-    </TouchableOpacity>
+      </Animated.View>
+    </>
   );
 }
 

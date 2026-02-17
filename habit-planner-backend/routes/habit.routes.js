@@ -14,8 +14,9 @@ const { protect } = require('../middleware/auth.middleware');
 
 router.use(protect);
 
-router.route('/').get(getHabits).post(createHabit);
+// Stats route must come before /:id to avoid treating 'stats' as an ID
 router.route('/stats').get(getStats);
+router.route('/').get(getHabits).post(createHabit);
 router.route('/:id').get(getHabitById).put(updateHabit).delete(deleteHabit);
 router.route('/:id/complete').patch(markComplete);
 

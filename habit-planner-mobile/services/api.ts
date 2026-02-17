@@ -5,7 +5,12 @@ import { router } from 'expo-router';
 // Replace with your actual backend URL (e.g., from Render or local IP for dev)
 // For Android Emulator, use http://10.0.2.2:5000
 // For physical device, use your computer's IP address: http://192.168.x.x:5000
-const BASE_URL = 'http://10.0.2.2:5000'; 
+import { Platform } from 'react-native';
+
+// Replace with your actual backend URL (e.g., from Render or local IP for dev)
+// For Android Emulator, use http://10.0.2.2:5000
+// For physical device, use your computer's IP address: http://192.168.x.x:5000
+const BASE_URL = Platform.OS === 'android' ? 'http://10.0.2.2:5000' : 'http://localhost:5000'; 
 
 const api = axios.create({
   baseURL: BASE_URL,

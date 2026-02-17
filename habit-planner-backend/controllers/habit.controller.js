@@ -22,9 +22,9 @@ const recalculateStreaks = (habit) => {
     const lastCompletionDate = new Date(sortedCompletions[0].date);
     lastCompletionDate.setHours(0, 0, 0, 0);
     
-    // Calculate difference in days
-    const diffTime = Math.abs(today - lastCompletionDate);
-    const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+    // Calculate difference in days (using floor instead of ceil for accurate day count)
+    const diffTime = today - lastCompletionDate;
+    const diffDays = Math.floor(diffTime / (1000 * 60 * 60 * 24));
 
     // If last completion was more than 1 day ago (and not today), streak is broken (0). 
     // Wait, if I complete TODAY, streak should be at least 1.
@@ -239,10 +239,31 @@ const getStats = asyncHandler(async (req, res) => {
         }
     });
 
+    // Calculate weekly activity for the last 7 days
+    const weeklyActivity = [];
+    const days = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
+
+    for (let i = 6; i >= 0; i--) {
+        const d = new Date();
+        d.setDate(d.getDate() - i);
+        const dateStr = d.toISOString().split('T')[0];
+        const dayName = days[d.getDay()];
+
+        let count = 0;
+        habits.forEach(habit => {
+            if (habit.completions.some(c => c.date === dateStr && c.completed)) {
+                count++;
+            }
+        });
+
+        weeklyActivity.push({ day: dayName, count });
+    }
+
     res.status(200).json({
         totalHabits,
         completedToday,
-        longestStreak
+        longestStreak,
+        weeklyActivity
     });
 });
 

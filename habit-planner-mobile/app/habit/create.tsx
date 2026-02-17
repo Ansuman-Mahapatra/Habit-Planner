@@ -8,13 +8,15 @@ const FREQUENCIES = ['daily', 'weekly', 'monthly'];
 const DAYS = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
 const COLORS = ['#7C6FFF', '#FF6B9D', '#3ECFA8', '#FFB443', '#FF5C5C', '#333'];
 const ICONS = ['📝', '🏃', '💧', '📚', '🧘', '💰', '💤', '🥗'];
+const TIMES = ['06:00', '07:00', '08:00', '09:00', '10:00', '12:00', '14:00', '16:00', '18:00', '20:00', '22:00'];
 
 export default function CreateHabitScreen() {
     const [title, setTitle] = useState('');
     const [category, setCategory] = useState('General');
     const [frequency, setFrequency] = useState('daily');
     const [targetDays, setTargetDays] = useState<string[]>([]);
-    const [reminder, setReminder] = useState('');
+    const [enableReminder, setEnableReminder] = useState(false);
+    const [reminder, setReminder] = useState('08:00');
     const [color, setColor] = useState(COLORS[0]);
     const [icon, setIcon] = useState(ICONS[0]);
 
@@ -36,7 +38,7 @@ export default function CreateHabitScreen() {
             category,
             frequency,
             targetDays,
-            reminder,
+            reminder: enableReminder ? reminder : '',
             color,
             icon
         }, {
@@ -110,6 +112,33 @@ export default function CreateHabitScreen() {
                     </TouchableOpacity>
                 ))}
             </ScrollView>
+
+            <View style={styles.reminderSection}>
+                <View style={styles.reminderHeader}>
+                    <Text style={styles.label}>Set Reminder</Text>
+                    <Switch
+                        value={enableReminder}
+                        onValueChange={setEnableReminder}
+                        trackColor={{ false: '#2a2a35', true: '#7C6FFF' }}
+                        thumbColor={enableReminder ? '#fff' : '#666'}
+                    />
+                </View>
+                {enableReminder && (
+                    <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.timeRow}>
+                        {TIMES.map(time => (
+                            <TouchableOpacity
+                                key={time}
+                                style={[styles.timeButton, reminder === time && styles.timeButtonActive]}
+                                onPress={() => setReminder(time)}
+                            >
+                                <Text style={[styles.timeText, reminder === time && styles.timeTextActive]}>
+                                    {time}
+                                </Text>
+                            </TouchableOpacity>
+                        ))}
+                    </ScrollView>
+                )}
+            </View>
 
             <TouchableOpacity 
                 style={styles.createButton} 
@@ -233,6 +262,40 @@ const styles = StyleSheet.create({
     },
     iconText: {
         fontSize: 24,
+    },
+    reminderSection: {
+        marginTop: 16,
+    },
+    reminderHeader: {
+        flexDirection: 'row',
+        justifyContent: 'space-between',
+        alignItems: 'center',
+        marginBottom: 12,
+    },
+    timeRow: {
+        flexDirection: 'row',
+        marginTop: 8,
+    },
+    timeButton: {
+        paddingHorizontal: 16,
+        paddingVertical: 10,
+        borderRadius: 8,
+        backgroundColor: '#16161F',
+        marginRight: 8,
+        borderWidth: 1,
+        borderColor: '#2a2a35',
+    },
+    timeButtonActive: {
+        backgroundColor: '#7C6FFF',
+        borderColor: '#7C6FFF',
+    },
+    timeText: {
+        color: '#a0a0a0',
+        fontSize: 14,
+    },
+    timeTextActive: {
+        color: '#fff',
+        fontWeight: 'bold',
     },
     createButton: {
         backgroundColor: '#7C6FFF',

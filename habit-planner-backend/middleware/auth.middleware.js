@@ -13,11 +13,23 @@ const protect = asyncHandler(async (req, res, next) => {
             // Get token from header
             token = req.headers.authorization.split(' ')[1];
 
+            // Check if JWT_SECRET is configured
+            if (!process.env.JWT_SECRET) {
+                console.error('JWT_SECRET is not defined in environment variables');
+                res.status(500);
+                throw new Error('Server configuration error');
+            }
+
             // Verify token
             const decoded = jwt.verify(token, process.env.JWT_SECRET);
 
             // Get user from the token
             req.user = await User.findById(decoded.id).select('-password');
+
+            if (!req.user) {
+                res.status(401);
+                throw new Error('User not found');
+            }
 
             next();
         } catch (error) {

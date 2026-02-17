@@ -4,14 +4,20 @@ import { habitsAPI } from '../services/api';
 export const useHabits = (frequency?: string) => {
   return useQuery({
     queryKey: ['habits', frequency],
-    queryFn: () => habitsAPI.getAll(frequency),
+    queryFn: async () => {
+      const response = await habitsAPI.getAll(frequency);
+      return response.data;
+    },
   });
 };
 
 export const useHabit = (id: string) => {
   return useQuery({
     queryKey: ['habit', id],
-    queryFn: () => habitsAPI.getById(id),
+    queryFn: async () => {
+      const response = await habitsAPI.getById(id);
+      return response.data;
+    },
   });
 };
 
@@ -62,6 +68,9 @@ export const useToggleComplete = () => {
 export const useStats = () => {
     return useQuery({
         queryKey: ['stats'],
-        queryFn: () => habitsAPI.getStats(),
+        queryFn: async () => {
+            const response = await habitsAPI.getStats();
+            return response.data;
+        },
     });
 };

@@ -19,6 +19,7 @@ interface HabitState {
   login: (user: User, token: string) => Promise<void>;
   logout: () => Promise<void>;
   loadUser: () => Promise<void>;
+  updateUserName: (name: string) => Promise<void>;
   toggleTheme: () => void;
 }
 
@@ -43,18 +44,41 @@ export const useHabitStore = create<HabitState>((set) => ({
 
   loadUser: async () => {
     try {
-      const token = await AsyncStorage.getItem('token');
       const userStr = await AsyncStorage.getItem('user');
       
-      if (token && userStr) {
+      if (userStr) {
         const user = JSON.parse(userStr);
-        set({ token, user, isAuthenticated: true, isLoading: false });
+        set({ user, isAuthenticated: true, isLoading: false });
       } else {
-        set({ token: null, user: null, isAuthenticated: false, isLoading: false });
+        // Set default user as Ansuman
+        const defaultUser: User = {
+          _id: 'default-user',
+          name: 'Ansuman',
+          email: 'ansuman@local',
+          token: 'local-token'
+        };
+        await AsyncStorage.setItem('user', JSON.stringify(defaultUser));
+        set({ user: defaultUser, isAuthenticated: true, isLoading: false });
       }
     } catch (error) {
       console.error('Failed to load user', error);
-      set({ isLoading: false });
+      // Even on error, set default user
+      const defaultUser: User = {
+        _id: 'default-user',
+        name: 'Ansuman',
+        email: 'ansuman@local',
+        token: 'local-token'
+      };
+      set({ user: defaultUser, isAuthenticated: true, isLoading: false });
+    }
+  },
+
+  updateUserName: async (name: string) => {
+    const currentUser = useHabitStore.getState().user;
+    if (currentUser) {
+      const updatedUser = { ...currentUser, name };
+      await AsyncStorage.setItem('user', JSON.stringify(updatedUser));
+      set({ user: updatedUser });
     }
   },
 
