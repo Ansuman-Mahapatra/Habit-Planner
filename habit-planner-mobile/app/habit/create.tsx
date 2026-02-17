@@ -1,0 +1,250 @@
+import React, { useState } from 'react';
+import { View, Text, TextInput, TouchableOpacity, StyleSheet, ScrollView, Switch } from 'react-native';
+import { useCreateHabit } from '../../hooks/useHabits';
+import { router } from 'expo-router';
+import FontAwesome from '@expo/vector-icons/FontAwesome';
+
+const FREQUENCIES = ['daily', 'weekly', 'monthly'];
+const DAYS = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
+const COLORS = ['#7C6FFF', '#FF6B9D', '#3ECFA8', '#FFB443', '#FF5C5C', '#333'];
+const ICONS = ['📝', '🏃', '💧', '📚', '🧘', '💰', '💤', '🥗'];
+
+export default function CreateHabitScreen() {
+    const [title, setTitle] = useState('');
+    const [category, setCategory] = useState('General');
+    const [frequency, setFrequency] = useState('daily');
+    const [targetDays, setTargetDays] = useState<string[]>([]);
+    const [reminder, setReminder] = useState('');
+    const [color, setColor] = useState(COLORS[0]);
+    const [icon, setIcon] = useState(ICONS[0]);
+
+    const createMutation = useCreateHabit();
+
+    const toggleDay = (day: string) => {
+        if (targetDays.includes(day)) {
+            setTargetDays(targetDays.filter(d => d !== day));
+        } else {
+            setTargetDays([...targetDays, day]);
+        }
+    };
+
+    const handleCreate = () => {
+        if (!title) return;
+
+        createMutation.mutate({
+            title,
+            category,
+            frequency,
+            targetDays,
+            reminder,
+            color,
+            icon
+        }, {
+            onSuccess: () => {
+                router.back();
+            }
+        });
+    };
+
+    return (
+        <ScrollView style={styles.container} contentContainerStyle={styles.content}>
+            <Text style={styles.label}>Title</Text>
+            <TextInput 
+                style={styles.input} 
+                placeholder="e.g. Read 30 mins" 
+                placeholderTextColor="#666" 
+                value={title}
+                onChangeText={setTitle}
+            />
+
+            <Text style={styles.label}>Frequency</Text>
+            <View style={styles.frequencyRow}>
+                {FREQUENCIES.map(freq => (
+                    <TouchableOpacity
+                        key={freq}
+                        style={[styles.freqButton, frequency === freq && styles.freqButtonActive]}
+                        onPress={() => setFrequency(freq)}
+                    >
+                        <Text style={[styles.freqText, frequency === freq && styles.freqTextActive]}>{freq}</Text>
+                    </TouchableOpacity>
+                ))}
+            </View>
+
+            {frequency === 'weekly' && (
+                <>
+                    <Text style={styles.label}>Target Days</Text>
+                    <View style={styles.daysRow}>
+                        {DAYS.map(day => (
+                            <TouchableOpacity
+                                key={day}
+                                style={[styles.dayButton, targetDays.includes(day) && styles.dayButtonActive]}
+                                onPress={() => toggleDay(day)}
+                            >
+                                <Text style={[styles.dayText, targetDays.includes(day) && styles.dayTextActive]}>{day}</Text>
+                            </TouchableOpacity>
+                        ))}
+                    </View>
+                </>
+            )}
+
+            <Text style={styles.label}>Color</Text>
+            <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.colorRow}>
+                {COLORS.map(c => (
+                    <TouchableOpacity
+                        key={c}
+                        style={[styles.colorButton, { backgroundColor: c }, color === c && styles.colorButtonActive]}
+                        onPress={() => setColor(c)}
+                    />
+                ))}
+            </ScrollView>
+
+            <Text style={styles.label}>Icon</Text>
+            <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.iconRow}>
+                {ICONS.map(i => (
+                    <TouchableOpacity
+                        key={i}
+                        style={[styles.iconButton, icon === i && styles.iconButtonActive]}
+                        onPress={() => setIcon(i)}
+                    >
+                        <Text style={styles.iconText}>{i}</Text>
+                    </TouchableOpacity>
+                ))}
+            </ScrollView>
+
+            <TouchableOpacity 
+                style={styles.createButton} 
+                onPress={handleCreate}
+                disabled={createMutation.isPending}
+            >
+                <Text style={styles.createButtonText}>
+                    {createMutation.isPending ? 'Creating...' : 'Create Habit'}
+                </Text>
+            </TouchableOpacity>
+        </ScrollView>
+    );
+}
+
+const styles = StyleSheet.create({
+    container: {
+        flex: 1,
+        backgroundColor: '#0F0E17',
+    },
+    content: {
+        padding: 20,
+    },
+    label: {
+        color: '#fff',
+        fontSize: 16,
+        marginBottom: 8,
+        marginTop: 16,
+    },
+    input: {
+        backgroundColor: '#16161F',
+        color: '#fff',
+        padding: 16,
+        borderRadius: 12,
+        fontSize: 16,
+        borderWidth: 1,
+        borderColor: '#2a2a35'
+    },
+    frequencyRow: {
+        flexDirection: 'row',
+        gap: 12,
+    },
+    freqButton: {
+        flex: 1,
+        padding: 12,
+        borderRadius: 8,
+        backgroundColor: '#16161F',
+        alignItems: 'center',
+        borderWidth: 1,
+        borderColor: '#2a2a35',
+    },
+    freqButtonActive: {
+        backgroundColor: '#7C6FFF',
+        borderColor: '#7C6FFF',
+    },
+    freqText: {
+        color: '#a0a0a0',
+        textTransform: 'capitalize',
+    },
+    freqTextActive: {
+        color: '#fff',
+        fontWeight: 'bold',
+    },
+    daysRow: {
+        flexDirection: 'row',
+        flexWrap: 'wrap',
+        gap: 8,
+    },
+    dayButton: {
+        width: 40,
+        height: 40,
+        borderRadius: 20,
+        backgroundColor: '#16161F',
+        alignItems: 'center',
+        justifyContent: 'center',
+        borderWidth: 1,
+        borderColor: '#2a2a35',
+    },
+    dayButtonActive: {
+        backgroundColor: '#7C6FFF',
+        borderColor: '#7C6FFF',
+    },
+    dayText: {
+        color: '#a0a0a0',
+        fontSize: 12,
+    },
+    dayTextActive: {
+        color: '#fff',
+        fontWeight: 'bold',
+    },
+    colorRow: {
+        flexDirection: 'row',
+        gap: 12,
+    },
+    colorButton: {
+        width: 40,
+        height: 40,
+        borderRadius: 20,
+        marginRight: 12,
+    },
+    colorButtonActive: {
+        borderWidth: 3,
+        borderColor: '#fff',
+    },
+    iconRow: {
+        flexDirection: 'row',
+    },
+    iconButton: {
+        width: 50,
+        height: 50,
+        borderRadius: 12,
+        backgroundColor: '#16161F',
+        alignItems: 'center',
+        justifyContent: 'center',
+        marginRight: 12,
+        borderWidth: 1,
+        borderColor: '#2a2a35',
+    },
+    iconButtonActive: {
+        borderColor: '#7C6FFF',
+        backgroundColor: '#2a2a35',
+    },
+    iconText: {
+        fontSize: 24,
+    },
+    createButton: {
+        backgroundColor: '#7C6FFF',
+        padding: 18,
+        borderRadius: 16,
+        alignItems: 'center',
+        marginTop: 40,
+        marginBottom: 20,
+    },
+    createButtonText: {
+        color: '#fff',
+        fontSize: 18,
+        fontWeight: 'bold',
+    }
+});
