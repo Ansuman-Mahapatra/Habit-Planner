@@ -3,9 +3,11 @@ import { View, Text, TextInput, TouchableOpacity, StyleSheet, ScrollView, Switch
 import { useCreateHabit } from '../../hooks/useHabits';
 import { router } from 'expo-router';
 import FontAwesome from '@expo/vector-icons/FontAwesome';
+import CustomCalendar from '../../components/CustomCalendar';
 
-const FREQUENCIES = ['daily', 'weekly', 'monthly'];
+const FREQUENCIES = ['daily', 'weekly', 'monthly', 'custom'];
 const DAYS = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
+const WEEKS = ['Week 1', 'Week 2', 'Week 3', 'Week 4', 'Last Week'];
 const COLORS = ['#7C6FFF', '#FF6B9D', '#3ECFA8', '#FFB443', '#FF5C5C', '#333'];
 const ICONS = ['📝', '🏃', '💧', '📚', '🧘', '💰', '💤', '🥗'];
 const TIMES = ['06:00', '07:00', '08:00', '09:00', '10:00', '12:00', '14:00', '16:00', '18:00', '20:00', '22:00'];
@@ -15,6 +17,8 @@ export default function CreateHabitScreen() {
     const [category, setCategory] = useState('General');
     const [frequency, setFrequency] = useState('daily');
     const [targetDays, setTargetDays] = useState<string[]>([]);
+    const [targetWeeks, setTargetWeeks] = useState<string[]>([]);
+    const [customDates, setCustomDates] = useState<string[]>([]);
     const [enableReminder, setEnableReminder] = useState(false);
     const [reminder, setReminder] = useState('08:00');
     const [color, setColor] = useState(COLORS[0]);
@@ -30,6 +34,22 @@ export default function CreateHabitScreen() {
         }
     };
 
+    const toggleWeek = (week: string) => {
+        if (targetWeeks.includes(week)) {
+            setTargetWeeks(targetWeeks.filter(w => w !== week));
+        } else {
+            setTargetWeeks([...targetWeeks, week]);
+        }
+    };
+
+    const toggleDate = (date: string) => {
+        if (customDates.includes(date)) {
+            setCustomDates(customDates.filter(d => d !== date));
+        } else {
+            setCustomDates([...customDates, date]);
+        }
+    };
+
     const handleCreate = () => {
         if (!title) return;
 
@@ -38,6 +58,8 @@ export default function CreateHabitScreen() {
             category,
             frequency,
             targetDays,
+            targetWeeks,
+            customDates,
             reminder: enableReminder ? reminder : '',
             color,
             icon
@@ -86,6 +108,30 @@ export default function CreateHabitScreen() {
                             </TouchableOpacity>
                         ))}
                     </View>
+                </>
+            )}
+
+            {frequency === 'monthly' && (
+                <>
+                    <Text style={styles.label}>Target Weeks</Text>
+                    <View style={styles.weeksRow}>
+                        {WEEKS.map(week => (
+                            <TouchableOpacity
+                                key={week}
+                                style={[styles.freqButton, targetWeeks.includes(week) && styles.freqButtonActive]}
+                                onPress={() => toggleWeek(week)}
+                            >
+                                <Text style={[styles.freqText, targetWeeks.includes(week) && styles.freqTextActive]}>{week}</Text>
+                            </TouchableOpacity>
+                        ))}
+                    </View>
+                </>
+            )}
+
+            {frequency === 'custom' && (
+                <>
+                    <Text style={styles.label}>Select Dates</Text>
+                    <CustomCalendar selectedDates={customDates} onToggle={toggleDate} />
                 </>
             )}
 
@@ -200,6 +246,11 @@ const styles = StyleSheet.create({
     freqTextActive: {
         color: '#fff',
         fontWeight: 'bold',
+    },
+    weeksRow: {
+        flexDirection: 'row',
+        flexWrap: 'wrap',
+        gap: 12,
     },
     daysRow: {
         flexDirection: 'row',

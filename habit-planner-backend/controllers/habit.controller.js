@@ -89,7 +89,7 @@ const getHabits = asyncHandler(async (req, res) => {
 // @route   POST /api/habits
 // @access  Private
 const createHabit = asyncHandler(async (req, res) => {
-    const { title, category, frequency, targetDays, reminder, color, icon } = req.body;
+    const { title, category, frequency, targetDays, targetWeeks, customDates, reminder, color, icon } = req.body;
 
     if (!title || !frequency) {
         res.status(400);
@@ -101,7 +101,9 @@ const createHabit = asyncHandler(async (req, res) => {
         title,
         category,
         frequency,
-        targetDays,
+        targetDays: frequency === 'weekly' ? targetDays : [],
+        targetWeeks: frequency === 'monthly' ? targetWeeks : [],
+        customDates: frequency === 'custom' ? customDates : [],
         reminder,
         color,
         icon,

@@ -29,10 +29,18 @@ const habitSchema = mongoose.Schema(
         frequency: {
             type: String,
             required: true,
-            enum: ['daily', 'weekly', 'monthly']
+            enum: ['daily', 'weekly', 'monthly', 'custom']
         },
         targetDays: {
             type: [String], // ["Mon", "Wed", "Fri"] - only for weekly
+            default: []
+        },
+        targetWeeks: {
+            type: [String], // ["Week 1", "Week 3"] - only for monthly
+            default: []
+        },
+        customDates: {
+            type: [String], // ["2024-02-14", "2024-02-20"] - only for custom
             default: []
         },
         completions: [completionSchema],
