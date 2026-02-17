@@ -4,6 +4,7 @@ import { useCreateHabit } from '../../hooks/useHabits';
 import { router } from 'expo-router';
 import FontAwesome from '@expo/vector-icons/FontAwesome';
 import CustomCalendar from '../../components/CustomCalendar';
+import SpotlightBackground from '../../components/SpotlightBackground';
 
 const FREQUENCIES = ['daily', 'weekly', 'monthly', 'custom'];
 const DAYS = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
@@ -71,6 +72,7 @@ export default function CreateHabitScreen() {
     };
 
     return (
+    <SpotlightBackground>
         <ScrollView style={styles.container} contentContainerStyle={styles.content}>
             <Text style={styles.label}>Title</Text>
             <TextInput 
@@ -196,6 +198,7 @@ export default function CreateHabitScreen() {
                 </Text>
             </TouchableOpacity>
         </ScrollView>
+    </SpotlightBackground>
     );
 }
 

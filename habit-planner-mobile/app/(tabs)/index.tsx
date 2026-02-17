@@ -2,9 +2,10 @@ import { View, Text, StyleSheet, ScrollView, RefreshControl, TouchableOpacity, A
 import { useStats, useHabits, useToggleComplete } from '../../hooks/useHabits';
 import ProgressRing from '../../components/ProgressRing';
 import HabitCard from '../../components/HabitCard';
+import SpotlightBackground from '../../components/SpotlightBackground';
 import { useHabitStore } from '../../store/habitStore';
 import { Link } from 'expo-router';
-import { useEffect, useRef } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { LinearGradient } from 'expo-linear-gradient';
 
 export default function DashboardScreen() {
@@ -16,6 +17,27 @@ export default function DashboardScreen() {
   // Animations
   const fadeAnim = useRef(new Animated.Value(0)).current;
   const fabScale = useRef(new Animated.Value(1)).current;
+
+  // Local state for delayed removal of completed habits
+  const [justCompletedIds, setJustCompletedIds] = useState<string[]>([]);
+
+  const isCompletedToday = (habit: any) => {
+    const today = new Date().toISOString().split('T')[0];
+    return habit.completions?.some((c: any) => c.date === today && c.completed);
+  };
+
+  const visibleHabits = habitsQuery.data?.filter((h: any) => !isCompletedToday(h) || justCompletedIds.includes(h._id)) || [];
+
+  const handleToggle = (id: string, isAlreadyCompleted: boolean) => {
+    if (!isAlreadyCompleted) {
+      setJustCompletedIds(prev => [...prev, id]);
+      // Remove from list after 3 seconds (duration of confetti + a bit)
+      setTimeout(() => {
+        setJustCompletedIds(prev => prev.filter(hid => hid !== id));
+      }, 3000);
+    }
+    toggleMutation.mutate(id);
+  };
 
   useEffect(() => {
     // Fade in animation
@@ -52,12 +74,7 @@ export default function DashboardScreen() {
     : 0;
 
   return (
-    <View style={styles.container}>
-      <LinearGradient
-        colors={['#0a0e0d', '#0f1410', '#0a1209', '#0a0e0d']}
-        locations={[0, 0.3, 0.7, 1]}
-        style={StyleSheet.absoluteFillObject}
-      />
+    <SpotlightBackground>
       <ScrollView 
         contentContainerStyle={styles.contentContainer}
         refreshControl={
@@ -108,10 +125,10 @@ export default function DashboardScreen() {
         
         {habitsQuery.isLoading ? (
           <Text style={styles.loadingText}>Loading habits...</Text>
-        ) : habitsQuery.data?.length === 0 ? (
-          <Text style={styles.emptyText}>No daily habits set yet.</Text>
+        ) : visibleHabits.length === 0 ? (
+          <Text style={styles.emptyText}>No pending habits for today!</Text>
         ) : (
-          habitsQuery.data?.map((habit: any, index: number) => (
+          visibleHabits.map((habit: any, index: number) => (
             <Animated.View
               key={habit._id}
               style={{
@@ -126,7 +143,7 @@ export default function DashboardScreen() {
             >
               <HabitCard 
                 habit={habit} 
-                onToggle={() => toggleMutation.mutate(habit._id)}
+                onToggle={() => handleToggle(habit._id, isCompletedToday(habit))}
                 onPress={() => {}} // navigation to detail
               />
             </Animated.View>
@@ -148,7 +165,7 @@ export default function DashboardScreen() {
           </TouchableOpacity>
         </Animated.View>
       </Link>
-    </View>
+    </SpotlightBackground>
   );
 }
 

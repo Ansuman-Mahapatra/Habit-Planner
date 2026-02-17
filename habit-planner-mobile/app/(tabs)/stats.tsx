@@ -1,11 +1,17 @@
-import { View, Text, StyleSheet, Platform, ActivityIndicator, Animated } from 'react-native';
+import { View, Text, StyleSheet, Platform, ActivityIndicator, Animated, TouchableOpacity } from 'react-native';
 import { CartesianChart, Bar } from 'victory-native';
 import { useStats } from '../../hooks/useHabits';
 import { LinearGradient } from 'expo-linear-gradient';
-import { useEffect, useRef } from 'react';
+import { useEffect, useRef, useState } from 'react';
+import SpotlightBackground from '../../components/SpotlightBackground';
 
 interface WeeklyActivity {
   day: string;
+  count: number;
+}
+
+interface MonthlyActivity {
+  month: string;
   count: number;
 }
 
@@ -13,8 +19,11 @@ export default function StatsScreen() {
   const isWeb = Platform.OS === 'web';
   const { data: statsData, isLoading } = useStats();
   const fadeAnim = useRef(new Animated.Value(0)).current;
+  const [viewMode, setViewMode] = useState<'weekly' | 'monthly'>('weekly');
   
-  const data: WeeklyActivity[] = statsData?.weeklyActivity || [];
+  const weeklyData: WeeklyActivity[] = statsData?.weeklyActivity || [];
+  const monthlyData: MonthlyActivity[] = statsData?.monthlyActivity || [];
+  const data = viewMode === 'weekly' ? weeklyData : monthlyData;
 
   useEffect(() => {
     Animated.timing(fadeAnim, {
@@ -33,14 +42,25 @@ export default function StatsScreen() {
   }
 
   return (
-    <View style={styles.container}>
-      <LinearGradient
-        colors={['#0a0e0d', '#0f1410', '#0a1209', '#0a0e0d']}
-        locations={[0, 0.3, 0.7, 1]}
-        style={StyleSheet.absoluteFillObject}
-      />
+    <SpotlightBackground>
       <Animated.View style={{ opacity: fadeAnim, flex: 1, width: '100%' }}>
-        <Text style={styles.title}>Weekly Progress</Text>
+        <Text style={styles.title}>Your Progress</Text>
+        
+        <View style={styles.toggleContainer}>
+          <TouchableOpacity 
+            style={[styles.toggleButton, viewMode === 'weekly' && styles.toggleButtonActive]} 
+            onPress={() => setViewMode('weekly')}
+          >
+            <Text style={[styles.toggleText, viewMode === 'weekly' && styles.toggleTextActive]}>Weekly</Text>
+          </TouchableOpacity>
+          <TouchableOpacity 
+            style={[styles.toggleButton, viewMode === 'monthly' && styles.toggleButtonActive]} 
+            onPress={() => setViewMode('monthly')}
+          >
+            <Text style={[styles.toggleText, viewMode === 'monthly' && styles.toggleTextActive]}>Monthly</Text>
+          </TouchableOpacity>
+        </View>
+
         <View style={{ height: 300, width: '100%' }}>
           {isWeb ? (
             <View style={styles.webPlaceholder}>
@@ -48,7 +68,7 @@ export default function StatsScreen() {
                <Text style={styles.webText}>Please view on Android/iOS to see the graph.</Text>
                {/* Simple visual fallback for web could go here if needed */}
                <View style={styles.simpleBarContainer}>
-                  {data.map((d: WeeklyActivity, i: number) => (
+                  {data.map((d: any, i: number) => (
                       <Animated.View 
                         key={i} 
                         style={[
@@ -66,9 +86,9 @@ export default function StatsScreen() {
                       >
                           <LinearGradient
                             colors={['#9D7FFF', '#7C6FFF']}
-                            style={[styles.simpleBar, { height: Math.max(d.count * 20, 4) }]}
+                            style={[styles.simpleBar, { height: Math.max(d.count * (viewMode === 'weekly' ? 20 : 10), 4) }]}
                           />
-                          <Text style={styles.webText}>{d.day}</Text>
+                          <Text style={styles.webText}>{viewMode === 'weekly' ? d.day : d.month}</Text>
                       </Animated.View>
                   ))}
                </View>
@@ -76,7 +96,7 @@ export default function StatsScreen() {
           ) : (
             <CartesianChart
               data={data as any[]}
-              xKey="day"
+              xKey={viewMode === 'weekly' ? "day" : "month"}
               yKeys={["count"]}
               domainPadding={{ left: 50, right: 50, top: 30 }}
             >
@@ -92,7 +112,7 @@ export default function StatsScreen() {
           )}
         </View>
       </Animated.View>
-    </View>
+    </SpotlightBackground>
   );
 }
 
@@ -109,6 +129,29 @@ const styles = StyleSheet.create({
     fontWeight: 'bold',
     color: '#fff',
     marginBottom: 20,
+  },
+  toggleContainer: {
+    flexDirection: 'row',
+    marginBottom: 20,
+    backgroundColor: '#16161F',
+    borderRadius: 8,
+    padding: 4,
+  },
+  toggleButton: {
+    paddingVertical: 8,
+    paddingHorizontal: 16,
+    borderRadius: 6,
+  },
+  toggleButtonActive: {
+    backgroundColor: '#7C6FFF',
+  },
+  toggleText: {
+    color: '#a0a0a0',
+    fontSize: 14,
+    fontWeight: '600',
+  },
+  toggleTextActive: {
+    color: '#fff',
   },
   webPlaceholder: {
     flex: 1,

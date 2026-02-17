@@ -261,11 +261,36 @@ const getStats = asyncHandler(async (req, res) => {
         weeklyActivity.push({ day: dayName, count });
     }
 
+    // Calculate monthly activity for the last 6 months
+    const monthlyActivity = [];
+    const monthNames = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+    
+    for (let i = 5; i >= 0; i--) {
+        const d = new Date();
+        d.setMonth(d.getMonth() - i);
+        const monthIndex = d.getMonth();
+        const year = d.getFullYear();
+        const monthName = monthNames[monthIndex];
+        const monthKey = `${year}-${String(monthIndex + 1).padStart(2, '0')}`; // YYYY-MM
+
+        let count = 0;
+        habits.forEach(habit => {
+            habit.completions.forEach(c => {
+                if (c.completed && c.date.startsWith(monthKey)) {
+                    count++;
+                }
+            });
+        });
+
+        monthlyActivity.push({ month: monthName, count });
+    }
+
     res.status(200).json({
         totalHabits,
         completedToday,
         longestStreak,
-        weeklyActivity
+        weeklyActivity,
+        monthlyActivity
     });
 });
 

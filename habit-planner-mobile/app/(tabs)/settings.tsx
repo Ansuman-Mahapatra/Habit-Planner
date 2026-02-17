@@ -2,6 +2,7 @@ import React, { useState, useEffect, useRef } from 'react';
 import { View, Text, TextInput, TouchableOpacity, StyleSheet, ScrollView, Animated } from 'react-native';
 import { useHabitStore } from '../../store/habitStore';
 import { LinearGradient } from 'expo-linear-gradient';
+import SpotlightBackground from '../../components/SpotlightBackground';
 
 export default function SettingsScreen() {
   const { user, updateUserName } = useHabitStore();
@@ -25,12 +26,7 @@ export default function SettingsScreen() {
   };
 
   return (
-    <View style={styles.container}>
-      <LinearGradient
-        colors={['#0a0e0d', '#0f1410', '#0a1209', '#0a0e0d']}
-        locations={[0, 0.3, 0.7, 1]}
-        style={StyleSheet.absoluteFillObject}
-      />
+    <SpotlightBackground>
       <ScrollView contentContainerStyle={styles.content}>
         <Animated.View style={{ opacity: fadeAnim }}>
           <View style={styles.section}>
@@ -114,7 +110,7 @@ export default function SettingsScreen() {
           </View>
         </Animated.View>
       </ScrollView>
-    </View>
+    </SpotlightBackground>
   );
 }
 
