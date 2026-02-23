@@ -1,73 +1,61 @@
-# Welcome to your Lovable project
+# HabitFlow Frontend & Mobile App
 
-## Project info
+This directory holds the React (Vite) User Interface and houses the Capacitor-wrapped Native Android application source code.
 
-**URL**: https://lovable.dev/projects/REPLACE_WITH_PROJECT_ID
+## Tech Stack
 
-## How can I edit this code?
+- **Framework**: React.js with Vite
+- **Language**: TypeScript
+- **Styling**: Tailwind CSS + shadcn/ui components
+- **Mobile Container**: Capacitor (Ionic) + Android Studio
 
-There are several ways of editing your application.
+## The API Connection
 
-**Use Lovable**
+The frontend communicates directly with the live server. Inside `src/lib/api.ts`, the connection is hardcoded to:
+`https://habit-planner.onrender.com/api`
 
-Simply visit the [Lovable Project](https://lovable.dev/projects/REPLACE_WITH_PROJECT_ID) and start prompting.
+## How to run locally (Web Browser)
 
-Changes made via Lovable will be committed automatically to this repo.
+1. In the terminal, run `npm install`
+2. Run `npm run dev`
+3. Click the localhost port link to see the web version. Hot-reloading is fully enabled for any UI tweaks in React.
 
-**Use your preferred IDE**
+## How to Compile Physics Mobile App (.APK)
 
-If you want to work locally using your own IDE, you can clone this repo and push changes. Pushed changes will also be reflected in Lovable.
+Any time you make a change in the React `.tsx` files that you want to see permanently on your phone, follow these steps exactly:
 
-The only requirement is having Node.js & npm installed - [install with nvm](https://github.com/nvm-sh/nvm#installing-and-updating)
+1. **Build the Production code:**
 
-Follow these steps:
+   ```bash
+   npm run build
+   ```
 
-```sh
-# Step 1: Clone the repository using the project's Git URL.
-git clone <YOUR_GIT_URL>
+   _This minifies your React frontend into an optimized `dist/` folder._
 
-# Step 2: Navigate to the project directory.
-cd <YOUR_PROJECT_NAME>
+2. **Sync the Native Android Project:**
 
-# Step 3: Install the necessary dependencies.
-npm i
+   ```bash
+   npx cap sync android
+   ```
 
-# Step 4: Start the development server with auto-reloading and an instant preview.
-npm run dev
-```
+   _This commands Capacitor to inject your newest `dist/` changes into the native Android Studio source files._
 
-**Edit a file directly in GitHub**
+3. **Generate the Installable APK:**
+   Using the Command Line (while inside this folder):
 
-- Navigate to the desired file(s).
-- Click the "Edit" button (pencil icon) at the top right of the file view.
-- Make your changes and commit the changes.
+   ```bash
+   cd android
+   .\gradlew assembleDebug
+   ```
 
-**Use GitHub Codespaces**
+   _(Note: The terminal command requires Java JDK 17 to be installed on your machine)._
 
-- Navigate to the main page of your repository.
-- Click on the "Code" button (green button) near the top right.
-- Select the "Codespaces" tab.
-- Click on "New codespace" to launch a new Codespace environment.
-- Edit files directly within the Codespace and commit and push your changes once you're done.
+   **Alternative UI Method:**
+   1. Open **Android Studio**
+   2. Open the `android` folder in this project mapping.
+   3. Hit **Build > Build Bundle(s) / APK(s) > Build APK(s)** in the top menu.
 
-## What technologies are used for this project?
+The final installer file will be outputted to:
+`android\app\build\outputs\apk\debug\app-debug.apk`
 
-This project is built with:
-
-- Vite
-- TypeScript
-- React
-- shadcn-ui
-- Tailwind CSS
-
-## How can I deploy this project?
-
-Simply open [Lovable](https://lovable.dev/projects/REPLACE_WITH_PROJECT_ID) and click on Share -> Publish.
-
-## Can I connect a custom domain to my Lovable project?
-
-Yes, you can!
-
-To connect a domain, navigate to Project > Settings > Domains and click Connect Domain.
-
-Read more here: [Setting up a custom domain](https://docs.lovable.dev/features/custom-domain#custom-domain)
+Send this file to any Android device using Email, Google Drive, or Web Chat apps to natively install your custom application!
