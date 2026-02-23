@@ -89,16 +89,18 @@ const getHabits = asyncHandler(async (req, res) => {
 // @route   POST /api/habits
 // @access  Private
 const createHabit = asyncHandler(async (req, res) => {
-    const { title, category, frequency, targetDays, targetWeeks, customDates, reminder, color, icon } = req.body;
+    const { title, name, category, frequency, targetDays, targetWeeks, customDates, reminder, color, icon, type, startDate, endDate, weeklyGoal, note, repeatEvery, repeatUnit } = req.body;
 
-    if (!title || !frequency) {
+    const habitTitle = title || name;
+
+    if (!habitTitle || !frequency) {
         res.status(400);
         throw new Error('Please add title and frequency');
     }
 
     const habit = await Habit.create({
         userId: req.user.id,
-        title,
+        title: habitTitle,
         category,
         frequency,
         targetDays: frequency === 'weekly' ? targetDays : [],
@@ -107,6 +109,13 @@ const createHabit = asyncHandler(async (req, res) => {
         reminder,
         color,
         icon,
+        type,
+        startDate,
+        endDate,
+        weeklyGoal,
+        note,
+        repeatEvery,
+        repeatUnit
     });
 
     res.status(201).json(habit);
@@ -194,8 +203,7 @@ const markComplete = asyncHandler(async (req, res) => {
         throw new Error('Not authorized');
     }
 
-    const today = new Date();
-    const dateString = today.toISOString().split('T')[0]; // YYYY-MM-DD
+    const dateString = req.body.date || new Date().toISOString().split('T')[0]; // YYYY-MM-DD
 
     const existingCompletionIndex = habit.completions.findIndex(c => c.date === dateString);
 

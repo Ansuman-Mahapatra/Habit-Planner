@@ -43,6 +43,33 @@ const habitSchema = mongoose.Schema(
             type: [String], // ["2024-02-14", "2024-02-20"] - only for custom
             default: []
         },
+        // Frontend integration fields
+        type: {
+            type: String,
+            default: 'permanent',
+            enum: ['permanent', 'temporary']
+        },
+        startDate: {
+            type: String, // YYYY-MM-DD
+            default: () => new Date().toISOString().split('T')[0]
+        },
+        endDate: {
+            type: String
+        },
+        weeklyGoal: {
+            type: Number,
+            default: 100
+        },
+        note: {
+            type: String
+        },
+        repeatEvery: {
+            type: Number
+        },
+        repeatUnit: {
+            type: String,
+            enum: ['days', 'weeks']
+        },
         completions: [completionSchema],
         streak: {
             type: Number,
