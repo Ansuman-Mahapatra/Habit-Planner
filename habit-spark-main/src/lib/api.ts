@@ -1,8 +1,6 @@
 import { Habit, HabitCompletion } from '@/types/habit';
 
-// Assuming your local machine IP matches your log output earlier:
-// Modify to the physical machine IP (e.g. 172.35.0.116 or 192.168.1.X based on earlier VITE network trace)
-const API_URL = 'http://172.35.0.116:5000/api'; // Or your machine's exact IP instead of localhost
+const API_URL = 'https://habit-planner.onrender.com/api';
 
 // Simple token storage
 const getToken = () => localStorage.getItem('token');
