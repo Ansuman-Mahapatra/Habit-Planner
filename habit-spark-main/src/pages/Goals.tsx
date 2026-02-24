@@ -48,7 +48,11 @@ export default function Goals() {
       </div>
 
       <div className="space-y-6 stagger-children">
-        {goals.map(goal => {
+        {[...goals].sort((a, b) => {
+          if (!a.startDate) return 1;
+          if (!b.startDate) return -1;
+          return a.startDate.localeCompare(b.startDate);
+        }).map(goal => {
           // Find all habits assigned to this specific Goal
           const goalStats = stats.filter(s => s.habit.goalId === goal.id);
           
