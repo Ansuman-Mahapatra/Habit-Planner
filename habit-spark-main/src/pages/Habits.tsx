@@ -5,10 +5,10 @@ import { Habit, HabitCategory, HabitFrequency, HabitType, CATEGORY_CONFIG, FREQU
 import { Plus, Check, X, Flame, Pencil, Trash2 } from 'lucide-react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 
-const EMPTY_HABIT: Partial<Habit> = { name: '', category: 'health', frequency: 'daily', type: 'permanent', weeklyGoal: 80, repeatEvery: 2, repeatUnit: 'days' };
+const EMPTY_HABIT: Partial<Habit> = { name: '', category: 'health', frequency: 'daily', type: 'permanent', weeklyGoal: 80, timesPerMonth: 1, repeatEvery: 2, repeatUnit: 'days', goalId: null };
 
 export default function Habits() {
-  const { habits, completions, addHabit, updateHabit, deleteHabit, toggleCompletion } = useHabits();
+  const { habits, goals, completions, addHabit, updateHabit, deleteHabit, toggleCompletion } = useHabits();
   const [filterType, setFilterType] = useState<'all' | HabitType>('all');
   const [filterCat, setFilterCat] = useState<'all' | HabitCategory>('all');
   const [modalOpen, setModalOpen] = useState(false);
@@ -90,7 +90,7 @@ export default function Habits() {
 
       {/* Modal */}
       <Dialog open={modalOpen} onOpenChange={setModalOpen}>
-        <DialogContent className="bg-card border-border max-w-md">
+        <DialogContent className="bg-card border-border max-w-md max-h-[90vh] overflow-y-auto">
           <DialogHeader>
             <DialogTitle className="font-display">{editing.id ? 'Edit Habit' : 'New Habit'}</DialogTitle>
           </DialogHeader>
@@ -99,6 +99,17 @@ export default function Habits() {
               <label className="text-xs text-muted-foreground font-mono mb-1 block">Name</label>
               <input value={editing.name || ''} onChange={e => setEditing(p => ({ ...p, name: e.target.value }))} className="w-full bg-input border border-border rounded-lg px-3 py-2 text-sm text-foreground focus:outline-none focus:ring-1 focus:ring-primary" placeholder="e.g. Morning Run" />
             </div>
+            
+            <div>
+              <label className="text-xs text-muted-foreground font-mono mb-1 block">Goal (Optional)</label>
+              <select value={editing.goalId || ''} onChange={e => setEditing(p => ({ ...p, goalId: e.target.value || null }))} className="w-full bg-input border border-border rounded-lg px-3 py-2 text-sm text-foreground focus:outline-none focus:ring-1 focus:ring-primary">
+                <option value="">-- No Goal --</option>
+                {goals.map(g => (
+                  <option key={g.id} value={g.id}>{g.name}</option>
+                ))}
+              </select>
+            </div>
+
             <div className="grid grid-cols-2 gap-3">
               <div>
                 <label className="text-xs text-muted-foreground font-mono mb-1 block">Category</label>
@@ -113,20 +124,16 @@ export default function Habits() {
                 </select>
               </div>
             </div>
-            {editing.frequency === 'custom' && (
+            
+            {editing.frequency === 'times_per_month' && (
               <div className="flex gap-3 items-end">
                 <div className="flex-1">
-                  <label className="text-xs text-muted-foreground font-mono mb-1 block">Every</label>
-                  <input type="number" min={1} max={90} value={editing.repeatEvery || 2} onChange={e => setEditing(p => ({ ...p, repeatEvery: Number(e.target.value) }))} className="w-full bg-input border border-border rounded-lg px-3 py-2 text-sm text-foreground focus:outline-none focus:ring-1 focus:ring-primary" />
-                </div>
-                <div className="flex-1">
-                  <select value={editing.repeatUnit || 'days'} onChange={e => setEditing(p => ({ ...p, repeatUnit: e.target.value as 'days' | 'weeks' }))} className="w-full bg-input border border-border rounded-lg px-3 py-2 text-sm text-foreground focus:outline-none focus:ring-1 focus:ring-primary">
-                    <option value="days">Days</option>
-                    <option value="weeks">Weeks</option>
-                  </select>
+                  <label className="text-xs text-muted-foreground font-mono mb-1 block">Times per month</label>
+                  <input type="number" min={1} max={31} value={editing.timesPerMonth || 1} onChange={e => setEditing(p => ({ ...p, timesPerMonth: Number(e.target.value) }))} className="w-full bg-input border border-border rounded-lg px-3 py-2 text-sm text-foreground focus:outline-none focus:ring-1 focus:ring-primary" />
                 </div>
               </div>
             )}
+
             <div className="grid grid-cols-2 gap-3">
               <div>
                 <label className="text-xs text-muted-foreground font-mono mb-1 block">Type</label>
@@ -194,8 +201,8 @@ function Section({ title, items, onToggle, onEdit, onDelete }: {
 
               {/* Frequency badge */}
               <span className="text-[10px] font-mono bg-secondary text-secondary-foreground px-2 py-0.5 rounded-full shrink-0">
-                {s.habit.frequency === 'custom'
-                  ? `Every ${s.habit.repeatEvery} ${s.habit.repeatUnit}`
+                {s.habit.frequency === 'times_per_month'
+                  ? `${s.habit.timesPerMonth}x / month`
                   : FREQUENCY_LABELS[s.habit.frequency]}
               </span>
 

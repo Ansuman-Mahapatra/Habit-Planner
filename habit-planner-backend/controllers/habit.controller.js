@@ -89,7 +89,7 @@ const getHabits = asyncHandler(async (req, res) => {
 // @route   POST /api/habits
 // @access  Private
 const createHabit = asyncHandler(async (req, res) => {
-    const { title, name, category, frequency, targetDays, targetWeeks, customDates, reminder, color, icon, type, startDate, endDate, weeklyGoal, note, repeatEvery, repeatUnit } = req.body;
+    const { title, name, category, frequency, targetDays, targetWeeks, customDates, reminder, color, icon, type, startDate, endDate, weeklyGoal, note, repeatEvery, repeatUnit, timesPerMonth, goalId } = req.body;
 
     const habitTitle = title || name;
 
@@ -106,6 +106,8 @@ const createHabit = asyncHandler(async (req, res) => {
         targetDays: frequency === 'weekly' ? targetDays : [],
         targetWeeks: frequency === 'monthly' ? targetWeeks : [],
         customDates: frequency === 'custom' ? customDates : [],
+        timesPerMonth: frequency === 'times_per_month' ? timesPerMonth : 1,
+        goalId: goalId || null,
         reminder,
         color,
         icon,

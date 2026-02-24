@@ -1,4 +1,5 @@
 import { Habit, HabitCompletion } from '@/types/habit';
+import { Goal } from '@/types/goal';
 
 const API_URL = 'https://habit-planner.onrender.com/api';
 
@@ -71,8 +72,21 @@ const mapBackendHabitToFrontend = (backendHabit: any): Habit => {
     weeklyGoal: backendHabit.weeklyGoal || 100,
     note: backendHabit.note,
     createdAt: backendHabit.createdAt,
+    timesPerMonth: backendHabit.timesPerMonth,
+    goalId: backendHabit.goalId,
     repeatEvery: backendHabit.repeatEvery,
     repeatUnit: backendHabit.repeatUnit,
+  };
+};
+
+const mapBackendGoalToFrontend = (g: any): Goal => {
+  return {
+    id: g._id,
+    name: g.name,
+    description: g.description,
+    startDate: g.startDate,
+    endDate: g.endDate,
+    createdAt: g.createdAt,
   };
 };
 
@@ -83,7 +97,6 @@ export const api = {
     const habits: Habit[] = [];
     const completions: HabitCompletion[] = [];
     
-    // Split the backend response into 'habits' and 'completions' arrays as expected by the frontend
     backendHabits.forEach((bh: any) => {
       habits.push(mapBackendHabitToFrontend(bh));
       
@@ -102,7 +115,6 @@ export const api = {
   },
 
   createHabit: async (habit: Omit<Habit, 'id' | 'createdAt'>) => {
-    // We send name, backend automatically translates to title
     const created = await authFetch('/habits', {
       method: 'POST',
       body: JSON.stringify(habit),
@@ -113,23 +125,44 @@ export const api = {
   updateHabit: async (habit: Habit) => {
     const updated = await authFetch(`/habits/${habit.id}`, {
       method: 'PUT',
-      // translate name -> title for update
       body: JSON.stringify({ ...habit, title: habit.name }),
     });
     return mapBackendHabitToFrontend(updated);
   },
 
   deleteHabit: async (id: string) => {
-    await authFetch(`/habits/${id}`, {
-      method: 'DELETE',
-    });
+    await authFetch(`/habits/${id}`, { method: 'DELETE' });
   },
 
   toggleCompletion: async (habitId: string, date: string) => {
-    // Send the specific date that was toggled (Our backend change supports this!)
     await authFetch(`/habits/${habitId}/complete`, {
       method: 'PATCH',
       body: JSON.stringify({ date }),
     });
+  },
+
+  getGoals: async () => {
+    const backendGoals = await authFetch('/goals');
+    return backendGoals.map(mapBackendGoalToFrontend);
+  },
+
+  createGoal: async (goal: Omit<Goal, 'id' | 'createdAt'>) => {
+    const created = await authFetch('/goals', {
+      method: 'POST',
+      body: JSON.stringify(goal),
+    });
+    return mapBackendGoalToFrontend(created);
+  },
+
+  updateGoal: async (goal: Goal) => {
+    const updated = await authFetch(`/goals/${goal.id}`, {
+      method: 'PUT',
+      body: JSON.stringify(goal),
+    });
+    return mapBackendGoalToFrontend(updated);
+  },
+
+  deleteGoal: async (id: string) => {
+    await authFetch(`/goals/${id}`, { method: 'DELETE' });
   }
 };

@@ -1,110 +1,191 @@
 import { useState, useMemo } from 'react';
 import { useHabits } from '@/context/HabitContext';
-import { getHabitStats } from '@/lib/habitUtils';
-import { CATEGORY_CONFIG } from '@/types/habit';
-import { RadarChart, PolarGrid, PolarAngleAxis, Radar, ResponsiveContainer } from 'recharts';
+import { getHabitStats, generateId, getToday } from '@/lib/habitUtils';
+import { Goal } from '@/types/goal';
+import { Plus, Target, Flame, Calendar, Trash2, Pencil, BarChart } from 'lucide-react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
+import { CATEGORY_CONFIG, FREQUENCY_LABELS } from '@/types/habit';
 
 export default function Goals() {
-  const { habits, completions, updateHabit } = useHabits();
-  const [selected, setSelected] = useState<string | null>(null);
+  const { habits, completions, goals, addGoal, updateGoal, deleteGoal } = useHabits();
+  const [modalOpen, setModalOpen] = useState(false);
+  const [editing, setEditing] = useState<Partial<Goal>>({});
 
+  // Compute all habit stats required for rendering
   const stats = useMemo(() => habits.map(h => getHabitStats(h, completions)), [habits, completions]);
 
-  const radarData = useMemo(() =>
-    stats.map(s => ({ name: s.habit.name.slice(0, 10), rate: s.weekRate, streak: Math.min(s.streak * 10, 100) })),
-    [stats]
-  );
+  const openAdd = () => { 
+    setEditing({ name: '', startDate: '', endDate: '', description: '' }); 
+    setModalOpen(true); 
+  };
+  
+  const openEdit = (g: Goal) => { 
+    setEditing(g); 
+    setModalOpen(true); 
+  };
 
-  const selectedStat = stats.find(s => s.habit.id === selected);
+  const handleSave = () => {
+    if (!editing.name) return;
+    
+    if (editing.id) {
+      updateGoal(editing as Goal);
+    } else {
+      addGoal({ ...editing, id: generateId(), createdAt: getToday() } as Goal);
+    }
+    setModalOpen(false);
+  };
 
   return (
-    <div className="space-y-6 max-w-5xl">
-      <div>
-        <h1 className="text-3xl font-display mb-1">Goals</h1>
-        <p className="text-muted-foreground text-sm">Set targets and track progress per habit</p>
+    <div className="space-y-6 max-w-4xl">
+      <div className="flex items-center justify-between">
+        <div>
+          <h1 className="text-3xl font-display mb-1">Goals</h1>
+          <p className="text-muted-foreground text-sm">Create overarching timelines and attach habits to them</p>
+        </div>
+        <button onClick={openAdd} className="flex items-center gap-2 bg-primary text-primary-foreground px-4 py-2.5 rounded-lg text-sm font-medium hover:opacity-90 transition-opacity">
+          <Plus className="w-4 h-4" /> New Goal
+        </button>
       </div>
 
-      {/* Goal Cards */}
-      <div className="grid grid-cols-2 lg:grid-cols-3 gap-4 stagger-children">
-        {stats.map(s => {
-          const cfg = CATEGORY_CONFIG[s.habit.category];
-          const progress = s.habit.weeklyGoal > 0 ? Math.min(100, Math.round((s.weekRate / s.habit.weeklyGoal) * 100)) : 0;
-          const circumference = 2 * Math.PI * 40;
-          const offset = circumference - (progress / 100) * circumference;
-
+      <div className="space-y-6 stagger-children">
+        {goals.map(goal => {
+          // Find all habits assigned to this specific Goal
+          const goalStats = stats.filter(s => s.habit.goalId === goal.id);
+          
           return (
-            <button key={s.habit.id} onClick={() => setSelected(s.habit.id)}
-              className="bg-card border border-border rounded-xl p-5 text-left hover:border-primary/30 transition-all group">
-              <div className="flex items-center gap-2 mb-4">
-                <span className="text-sm">{cfg.emoji}</span>
-                <span className="text-sm font-medium truncate">{s.habit.name}</span>
-              </div>
-              <div className="flex justify-center">
-                <svg width="100" height="100" className="transform -rotate-90">
-                  <circle cx="50" cy="50" r="40" fill="none" stroke="hsl(240,10%,14%)" strokeWidth="6" />
-                  <circle cx="50" cy="50" r="40" fill="none" stroke="hsl(38,92%,50%)" strokeWidth="6"
-                    strokeLinecap="round"
-                    strokeDasharray={circumference}
-                    strokeDashoffset={offset}
-                    className="transition-all duration-700"
-                  />
-                </svg>
-                <div className="absolute flex items-center justify-center w-[100px] h-[100px]">
-                  <span className="font-mono text-lg text-foreground">{progress}%</span>
+            <div key={goal.id} className="bg-card border border-border rounded-xl p-5 md:p-6 shadow-sm flex flex-col gap-4 transition-all hover:border-primary/20">
+              
+              <div className="flex justify-between items-start">
+                <div>
+                  <h3 className="text-lg font-medium text-foreground flex items-center gap-2">
+                    <Target className="w-5 h-5 text-primary" /> {goal.name}
+                  </h3>
+                  {goal.description && <p className="text-sm text-muted-foreground mt-1">{goal.description}</p>}
+                  
+                  <div className="flex items-center gap-2 mt-3 text-xs font-mono text-muted-foreground bg-secondary/50 px-2.5 py-1 rounded-md w-fit">
+                    <Calendar className="w-3.5 h-3.5" />
+                    {goal.startDate || goal.endDate ? (
+                      <>
+                        <span>{goal.startDate || 'No start'}</span>
+                        <span className="opacity-50">→</span>
+                        <span>{goal.endDate || 'No end'}</span>
+                      </>
+                    ) : (
+                      <span>Permanent Goal</span>
+                    )}
+                  </div>
+                </div>
+                
+                <div className="flex gap-2 shrink-0">
+                  <button onClick={() => openEdit(goal)} className="p-2 rounded-md hover:bg-secondary text-muted-foreground hover:text-foreground transition-colors">
+                    <Pencil className="w-4 h-4" />
+                  </button>
+                  <button onClick={() => deleteGoal(goal.id)} className="p-2 rounded-md hover:bg-destructive/10 text-muted-foreground hover:text-destructive transition-colors">
+                    <Trash2 className="w-4 h-4" />
+                  </button>
                 </div>
               </div>
-              <div className="text-center mt-3">
-                <div className="text-xs text-muted-foreground font-mono">Target: {s.habit.weeklyGoal}%</div>
-                <div className="text-xs text-muted-foreground">Current: {s.weekRate}%</div>
+
+              {/* Linked Habits UI within the Goal */}
+              <div className="mt-2 pt-4 border-t border-border border-dashed">
+                <h4 className="text-xs font-mono uppercase text-muted-foreground tracking-wider mb-3 flex justify-between items-center">
+                  <span>Linked Habits ({goalStats.length})</span>
+                </h4>
+                
+                {goalStats.length === 0 ? (
+                  <p className="text-sm text-muted-foreground/60 italic p-4 bg-secondary/30 rounded-lg text-center border border-border">
+                    No habits linked. Create a habit in the Habits tab and assign it to this Goal.
+                  </p>
+                ) : (
+                  <div className="grid md:grid-cols-2 gap-3">
+                    {goalStats.map(s => {
+                      const cfg = CATEGORY_CONFIG[s.habit.category];
+                      const progress = s.habit.weeklyGoal > 0 ? Math.min(100, Math.round((s.weekRate / s.habit.weeklyGoal) * 100)) : 0;
+                      
+                      return (
+                        <div key={s.habit.id} className="flex flex-col gap-3 bg-secondary/40 border border-border/50 rounded-lg p-3 relative overflow-hidden">
+                          <div className={`absolute top-0 left-0 bottom-0 w-1 bg-${cfg.color}`} />
+                          
+                          <div className="flex justify-between items-start pl-2">
+                            <div>
+                              <div className="flex items-center gap-1.5 text-sm font-medium">
+                                <span>{cfg.emoji}</span> {s.habit.name}
+                              </div>
+                              <div className="text-[10px] font-mono text-muted-foreground mt-0.5">
+                                {s.habit.frequency === 'times_per_month' 
+                                  ? `${s.habit.timesPerMonth}x / month` 
+                                  : FREQUENCY_LABELS[s.habit.frequency]}
+                              </div>
+                            </div>
+                            <div className="flex flex-col items-end">
+                              <div className="flex items-center gap-1 text-primary">
+                                <Flame className="w-3.5 h-3.5" />
+                                <span className="text-sm font-mono font-bold">{s.streak}</span>
+                              </div>
+                            </div>
+                          </div>
+
+                          {/* Mini Progress Bar for Weekly Target */}
+                          <div className="pl-2 pr-1">
+                            <div className="flex justify-between text-[10px] mb-1">
+                              <span className="text-muted-foreground">Weekly Target</span>
+                              <span className="font-mono text-foreground">{progress}%</span>
+                            </div>
+                            <div className="w-full bg-border h-1.5 rounded-full overflow-hidden">
+                              <div className="bg-primary h-full transition-all duration-700" style={{ width: `${progress}%` }} />
+                            </div>
+                          </div>
+                          
+                        </div>
+                      )
+                    })}
+                  </div>
+                )}
               </div>
-            </button>
+            </div>
           );
         })}
+
+        {goals.length === 0 && (
+          <div className="text-center py-24 text-muted-foreground border border-dashed border-border rounded-xl bg-card/50">
+            <Target className="w-12 h-12 mx-auto text-muted-foreground/30 mb-3" />
+            <p className="text-lg font-medium text-foreground">No goals set</p>
+            <p className="text-sm mt-1 max-w-[250px] mx-auto">Create a goal with a timeline, then assign habits to help you reach it.</p>
+          </div>
+        )}
       </div>
 
-      {/* Radar Chart */}
-      {radarData.length > 0 && (
-        <div className="bg-card border border-border rounded-xl p-5 animate-fade-up">
-          <h3 className="font-display text-lg mb-4">Habit Radar — Rate vs Streak</h3>
-          <ResponsiveContainer width="100%" height={300}>
-            <RadarChart data={radarData}>
-              <PolarGrid stroke="hsl(240,10%,18%)" />
-              <PolarAngleAxis dataKey="name" tick={{ fill: 'hsl(240,5%,50%)', fontSize: 10 }} />
-              <Radar name="Rate" dataKey="rate" stroke="hsl(38,92%,50%)" fill="hsl(38,92%,50%)" fillOpacity={0.15} strokeWidth={2} />
-              <Radar name="Streak" dataKey="streak" stroke="hsl(142,71%,45%)" fill="hsl(142,71%,45%)" fillOpacity={0.1} strokeWidth={2} />
-            </RadarChart>
-          </ResponsiveContainer>
-        </div>
-      )}
-
-      {/* Goal Edit Modal */}
-      <Dialog open={!!selected} onOpenChange={() => setSelected(null)}>
+      {/* Goal Modal */}
+      <Dialog open={modalOpen} onOpenChange={setModalOpen}>
         <DialogContent className="bg-card border-border max-w-sm">
           <DialogHeader>
-            <DialogTitle className="font-display">Set Goal</DialogTitle>
+            <DialogTitle className="font-display">{editing.id ? 'Edit Goal' : 'New Goal'}</DialogTitle>
           </DialogHeader>
-          {selectedStat && (
-            <div className="space-y-4 mt-2">
-              <div className="text-sm">{CATEGORY_CONFIG[selectedStat.habit.category].emoji} {selectedStat.habit.name}</div>
-              <div>
-                <label className="text-xs text-muted-foreground font-mono mb-1 block">Weekly Target %</label>
-                <input type="range" min={10} max={100} step={5} value={selectedStat.habit.weeklyGoal}
-                  onChange={e => updateHabit({ ...selectedStat.habit, weeklyGoal: Number(e.target.value) })}
-                  className="w-full accent-primary" />
-                <div className="text-xs font-mono text-primary text-right">{selectedStat.habit.weeklyGoal}%</div>
-              </div>
-              <div>
-                <label className="text-xs text-muted-foreground font-mono mb-1 block">Personal Note</label>
-                <textarea value={selectedStat.habit.note || ''} onChange={e => updateHabit({ ...selectedStat.habit, note: e.target.value })}
-                  className="w-full bg-input border border-border rounded-lg px-3 py-2 text-sm text-foreground focus:outline-none focus:ring-1 focus:ring-primary h-20 resize-none"
-                  placeholder="Why is this important to you?" />
-              </div>
-              <button onClick={() => setSelected(null)} className="w-full bg-primary text-primary-foreground py-2.5 rounded-lg text-sm font-medium hover:opacity-90 transition-opacity">
-                Done
-              </button>
+          <div className="space-y-4 mt-2">
+            <div>
+              <label className="text-xs text-muted-foreground font-mono mb-1 block">Goal Name</label>
+              <input value={editing.name || ''} onChange={e => setEditing(p => ({ ...p, name: e.target.value }))} className="w-full bg-input border border-border rounded-lg px-3 py-2 text-sm text-foreground focus:outline-none focus:ring-1 focus:ring-primary" placeholder="e.g. Marathon Prep" />
             </div>
-          )}
+            <div>
+              <label className="text-xs text-muted-foreground font-mono mb-1 block">Description</label>
+              <textarea value={editing.description || ''} onChange={e => setEditing(p => ({ ...p, description: e.target.value }))} className="w-full bg-input border border-border rounded-lg px-3 py-2 text-sm text-foreground focus:outline-none focus:ring-1 focus:ring-primary resize-none h-20" placeholder="Optional details..." />
+            </div>
+            
+            <div className="grid grid-cols-2 gap-3">
+              <div>
+                <label className="text-xs text-muted-foreground font-mono mb-1 block">Start Date</label>
+                <input type="date" value={editing.startDate || ''} onChange={e => setEditing(p => ({ ...p, startDate: e.target.value }))} className="w-full bg-input border border-border rounded-lg px-3 py-2 text-sm text-foreground focus:outline-none focus:ring-1 focus:ring-primary" />
+              </div>
+              <div>
+                <label className="text-xs text-muted-foreground font-mono mb-1 block">End Date</label>
+                <input type="date" value={editing.endDate || ''} onChange={e => setEditing(p => ({ ...p, endDate: e.target.value }))} className="w-full bg-input border border-border rounded-lg px-3 py-2 text-sm text-foreground focus:outline-none focus:ring-1 focus:ring-primary" />
+              </div>
+            </div>
+
+            <button onClick={handleSave} disabled={!editing.name} className="w-full bg-primary text-primary-foreground py-2.5 rounded-lg text-sm font-medium hover:opacity-90 disabled:opacity-50 transition-opacity mt-2">
+              {editing.id ? 'Update' : 'Create'} Goal
+            </button>
+          </div>
         </DialogContent>
       </Dialog>
     </div>

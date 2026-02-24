@@ -29,7 +29,16 @@ const habitSchema = mongoose.Schema(
         frequency: {
             type: String,
             required: true,
-            enum: ['daily', 'weekly', 'monthly', 'custom']
+            enum: ['daily', 'weekly', 'monthly', 'custom', 'times_per_month']
+        },
+        timesPerMonth: {
+            type: Number,
+            default: 1
+        },
+        goalId: {
+            type: mongoose.Schema.Types.ObjectId,
+            ref: 'Goal',
+            default: null
         },
         targetDays: {
             type: [String], // ["Mon", "Wed", "Fri"] - only for weekly

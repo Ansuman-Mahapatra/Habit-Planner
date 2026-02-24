@@ -1,5 +1,5 @@
 export type HabitCategory = 'health' | 'mind' | 'work' | 'lifestyle' | 'social';
-export type HabitFrequency = 'daily' | 'weekly' | 'monthly' | 'custom';
+export type HabitFrequency = 'daily' | 'weekly' | 'monthly' | 'times_per_month';
 export type HabitType = 'permanent' | 'temporary';
 
 export interface Habit {
@@ -13,9 +13,10 @@ export interface Habit {
   weeklyGoal: number; // target % per week (0-100)
   note?: string;
   createdAt: string;
-  /** Custom repeat: every N units */
+  timesPerMonth?: number;
+  goalId?: string | null;
+  /** Keep for backwards compatibility if needed */
   repeatEvery?: number;
-  /** Custom repeat unit */
   repeatUnit?: 'days' | 'weeks';
 }
 
@@ -48,5 +49,5 @@ export const FREQUENCY_LABELS: Record<HabitFrequency, string> = {
   daily: 'Daily',
   weekly: 'Weekly',
   monthly: 'Monthly',
-  custom: 'Custom',
+  times_per_month: 'Times per month',
 };
